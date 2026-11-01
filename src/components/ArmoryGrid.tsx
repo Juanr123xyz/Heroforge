@@ -16,18 +16,22 @@ export const ArmoryGrid: React.FC = () => {
   const isOverloaded = useAppSelector(selectIsOverencumbered);
 
   return (
-    <View style={styles.cardContainer}>
+    <View style={styles.card}>
+      {/* Cabecera */}
       <View style={styles.headerRow}>
-        <Text style={styles.zoneTitle}>ZONA C: ARMERÍA & MOCHILA</Text>
+        <View style={styles.zoneTagContainer}>
+          <Text style={styles.zoneTag}>ZONA C • ARMERÍA & MOCHILA</Text>
+        </View>
         <TouchableOpacity
-          style={styles.clearButton}
+          style={styles.btnClear}
           onPress={() => dispatch(clearEquipment())}
           disabled={equippedIds.length === 0}
+          activeOpacity={0.7}
         >
           <Text
             style={[
-              styles.clearButtonText,
-              equippedIds.length === 0 && { opacity: 0.4 },
+              styles.btnClearText,
+              equippedIds.length === 0 && { opacity: 0.35 },
             ]}
           >
             Desequipar Todo
@@ -39,31 +43,31 @@ export const ArmoryGrid: React.FC = () => {
       {isOverloaded && (
         <View style={styles.overloadAlert}>
           <Text style={styles.overloadAlertText}>
-            ⚠️ ¡SOBRECARGADO! (-50% Velocidad, -30% Poder)
+            ⚠️ ¡SOBRECARGADO! (-50% Velocidad, -30% Poder de Combate)
           </Text>
         </View>
       )}
 
-      {/* Resumen de Carga */}
-      <View style={styles.weightSummaryRow}>
-        <Text style={styles.weightSummaryText}>
-          Peso Equipado:{' '}
+      {/* Resumen de Carga de Mochila */}
+      <View style={styles.weightStatusRow}>
+        <Text style={styles.weightLabel}>
+          Peso en Mochila:{' '}
           <Text
-            style={{
-              color: isOverloaded ? '#ef4444' : '#38bdf8',
-              fontWeight: 'bold',
-            }}
+            style={[
+              styles.weightValue,
+              { color: isOverloaded ? '#ef4444' : '#38bdf8' },
+            ]}
           >
             {currentWeight} / {maxWeight} Kg
           </Text>
         </Text>
-        <Text style={styles.equippedCountText}>
-          {equippedIds.length} ítem(s) en uso
+        <Text style={styles.itemsEquippedCount}>
+          {equippedIds.length} ítem(s) equipados
         </Text>
       </View>
 
-      {/* Cuadrícula de Tarjetas de Ítems */}
-      <View style={styles.gridContainer}>
+      {/* Cuadrícula de Ítems */}
+      <View style={styles.grid}>
         {catalog.map((item) => {
           const isEquipped = equippedIds.includes(item.id);
 
@@ -77,49 +81,60 @@ export const ArmoryGrid: React.FC = () => {
               ]}
               onPress={() => dispatch(toggleEquipItem(item.id))}
             >
-              <View style={styles.cardTop}>
-                <Text style={styles.itemIcon}>{item.icon}</Text>
-                {isEquipped && (
-                  <View style={styles.equippedBadge}>
-                    <Text style={styles.equippedBadgeText}>✓</Text>
+              {/* Header de la tarjeta con icono y badge de equipado */}
+              <View style={styles.itemCardHeader}>
+                <View style={styles.itemIconContainer}>
+                  <Text style={styles.itemIcon}>{item.icon}</Text>
+                </View>
+                {isEquipped ? (
+                  <View style={styles.badgeEquipped}>
+                    <Text style={styles.badgeEquippedText}>EN USO</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.categoryBadge}>{item.category}</Text>
+                )}
+              </View>
+
+              {/* Nombre del ítem */}
+              <Text style={styles.itemName} numberOfLines={1}>
+                {item.name}
+              </Text>
+
+              {/* Bonos de atributos */}
+              <View style={styles.bonusesRow}>
+                {item.bonusStr !== 0 && (
+                  <View style={styles.bonusChip}>
+                    <Text style={styles.bonusChipText}>
+                      {item.bonusStr > 0 ? `+${item.bonusStr}` : item.bonusStr} STR
+                    </Text>
+                  </View>
+                )}
+                {item.bonusAgi !== 0 && (
+                  <View style={styles.bonusChip}>
+                    <Text style={styles.bonusChipText}>
+                      {item.bonusAgi > 0 ? `+${item.bonusAgi}` : item.bonusAgi} AGI
+                    </Text>
+                  </View>
+                )}
+                {item.bonusInt !== 0 && (
+                  <View style={styles.bonusChip}>
+                    <Text style={styles.bonusChipText}>
+                      {item.bonusInt > 0 ? `+${item.bonusInt}` : item.bonusInt} INT
+                    </Text>
                   </View>
                 )}
               </View>
 
-              <Text style={styles.itemName} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text style={styles.itemCategory}>{item.category}</Text>
-
-              {/* Bonos de estadísticas */}
-              <View style={styles.bonusesContainer}>
-                {item.bonusStr !== 0 && (
-                  <Text style={styles.bonusText}>
-                    {item.bonusStr > 0 ? `+${item.bonusStr}` : item.bonusStr} STR
-                  </Text>
-                )}
-                {item.bonusAgi !== 0 && (
-                  <Text style={styles.bonusText}>
-                    {item.bonusAgi > 0 ? `+${item.bonusAgi}` : item.bonusAgi} AGI
-                  </Text>
-                )}
-                {item.bonusInt !== 0 && (
-                  <Text style={styles.bonusText}>
-                    {item.bonusInt > 0 ? `+${item.bonusInt}` : item.bonusInt} INT
-                  </Text>
-                )}
-              </View>
-
-              {/* Peso en Kg */}
-              <View style={styles.itemFooter}>
-                <Text style={styles.weightBadgeText}>⚖️ {item.weight} Kg</Text>
+              {/* Pie de la tarjeta: Peso y estado de toque */}
+              <View style={styles.itemCardFooter}>
+                <Text style={styles.weightText}>⚖️ {item.weight} Kg</Text>
                 <Text
                   style={[
-                    styles.equipStateText,
-                    { color: isEquipped ? '#38bdf8' : '#64748b' },
+                    styles.actionHint,
+                    isEquipped ? styles.hintEquipped : styles.hintUnequipped,
                   ]}
                 >
-                  {isEquipped ? 'Equipado' : 'Tocar p/ equipar'}
+                  {isEquipped ? '✓ Equipado' : 'Tocar p/ usar'}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -131,65 +146,84 @@ export const ArmoryGrid: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
+  card: {
+    backgroundColor: '#111827',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: '#1f2937',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  zoneTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#94a3b8',
-    letterSpacing: 0.8,
-  },
-  clearButton: {
-    backgroundColor: '#334155',
+  zoneTagContainer: {
+    backgroundColor: '#1f2937',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 6,
   },
-  clearButtonText: {
-    color: '#cbd5e1',
+  zoneTag: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  btnClear: {
+    backgroundColor: '#1f2937',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#374151',
+  },
+  btnClearText: {
+    color: '#e5e7eb',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   overloadAlert: {
-    backgroundColor: '#ef444422',
+    backgroundColor: '#7f1d1d33',
     borderColor: '#ef4444',
     borderWidth: 1.5,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 10,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
     alignItems: 'center',
   },
   overloadAlertText: {
-    color: '#ef4444',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: '#f87171',
+    fontSize: 11,
+    fontWeight: '900',
+    textAlign: 'center',
   },
-  weightSummaryRow: {
+  weightStatusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  weightSummaryText: {
+  weightLabel: {
+    color: '#9ca3af',
     fontSize: 12,
-    color: '#cbd5e1',
+    fontWeight: '600',
   },
-  equippedCountText: {
-    fontSize: 12,
-    color: '#94a3b8',
+  weightValue: {
+    fontWeight: '900',
   },
-  gridContainer: {
+  itemsEquippedCount: {
+    color: '#9ca3af',
+    fontSize: 11,
+  },
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
@@ -197,83 +231,100 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     width: '48.5%',
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
+    backgroundColor: '#030712',
+    borderRadius: 12,
     padding: 10,
     borderWidth: 1.5,
-    borderColor: '#334155',
+    borderColor: '#1f2937',
   },
   itemCardEquipped: {
     borderColor: '#38bdf8',
-    backgroundColor: '#0c2340',
+    backgroundColor: '#071829',
     shadowColor: '#38bdf8',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  cardTop: {
+  itemCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  itemIcon: {
-    fontSize: 22,
-  },
-  equippedBadge: {
-    backgroundColor: '#38bdf8',
-    borderRadius: 10,
-    width: 18,
-    height: 18,
+  itemIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#111827',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  equippedBadgeText: {
-    color: '#0f172a',
-    fontSize: 11,
-    fontWeight: 'bold',
+  itemIcon: {
+    fontSize: 18,
+  },
+  badgeEquipped: {
+    backgroundColor: '#38bdf8',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  badgeEquippedText: {
+    color: '#030712',
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  categoryBadge: {
+    color: '#6b7280',
+    fontSize: 10,
+    fontWeight: '600',
   },
   itemName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#f8fafc',
-    marginBottom: 2,
-  },
-  itemCategory: {
-    fontSize: 10,
-    color: '#94a3b8',
+    color: '#f9fafb',
+    fontSize: 12,
+    fontWeight: '800',
     marginBottom: 6,
   },
-  bonusesContainer: {
+  bonusesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  bonusText: {
-    fontSize: 10,
-    color: '#4ade80',
-    fontWeight: '600',
-    backgroundColor: '#16653433',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+  bonusChip: {
+    backgroundColor: '#064e3b44',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#059669',
   },
-  itemFooter: {
+  bonusChipText: {
+    color: '#34d399',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  itemCardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#1f2937',
     paddingTop: 6,
   },
-  weightBadgeText: {
+  weightText: {
+    color: '#9ca3af',
     fontSize: 10,
-    color: '#cbd5e1',
+    fontWeight: '700',
   },
-  equipStateText: {
-    fontSize: 9,
-    fontWeight: '600',
+  actionHint: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  hintEquipped: {
+    color: '#38bdf8',
+  },
+  hintUnequipped: {
+    color: '#6b7280',
   },
 });

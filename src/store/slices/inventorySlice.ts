@@ -1,20 +1,30 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// ============================================================================
+// 1. TIPOS Y ESTRUCTURAS DE DATOS (inventorySlice)
+// ============================================================================
+
+export type ItemCategory = 'Arma' | 'Defensa' | 'Armadura' | 'Accesorio';
+
 export interface InventoryItem {
   id: string;
   name: string;
   icon: string;
-  category: 'Arma' | 'Defensa' | 'Armadura' | 'Accesorio';
+  category: ItemCategory;
   bonusStr: number;
   bonusAgi: number;
   bonusInt: number;
-  weight: number; // en Kg
+  weight: number; // en Kilogramos
 }
 
 export interface InventoryState {
   catalog: InventoryItem[];
   equippedIds: string[];
 }
+
+// ============================================================================
+// 2. ESTADO INICIAL DEL CATÁLOGO DE ÍTEMS Y EQUIPAMIENTO
+// ============================================================================
 
 const initialState: InventoryState = {
   catalog: [
@@ -31,7 +41,7 @@ const initialState: InventoryState = {
     {
       id: '2',
       name: 'Escudo de Titanio',
-      icon: '🛡️',
+      icon: '🛡️⚡',
       category: 'Defensa',
       bonusStr: 6,
       bonusAgi: -1,
@@ -82,10 +92,15 @@ const initialState: InventoryState = {
   equippedIds: [],
 };
 
+// ============================================================================
+// 3. DEFINICIÓN DEL SLICE Y REDUCERS
+// ============================================================================
+
 export const inventorySlice = createSlice({
   name: 'inventory',
   initialState,
   reducers: {
+    // Alterna el estado equipado / desequipado de un ítem por su ID
     toggleEquipItem: (state, action: PayloadAction<string>) => {
       const itemId = action.payload;
       const index = state.equippedIds.indexOf(itemId);
@@ -95,14 +110,22 @@ export const inventorySlice = createSlice({
         state.equippedIds.push(itemId);
       }
     },
+
+    // Vacía todo el equipamiento activo de golpe
     clearEquipment: (state) => {
       state.equippedIds = [];
     },
+
+    // Alias semántico para desequipar todo
     unequipAll: (state) => {
       state.equippedIds = [];
     },
   },
 });
+
+// ============================================================================
+// 4. ACCIONES Y REDUCER EXPORTADOS
+// ============================================================================
 
 export const { toggleEquipItem, clearEquipment, unequipAll } =
   inventorySlice.actions;

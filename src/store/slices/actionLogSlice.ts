@@ -1,5 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// ============================================================================
+// 1. TIPOS Y ESTRUCTURAS DE DATOS (actionLogSlice)
+// ============================================================================
+
 export interface ActionLogEntry {
   id: string;
   timestamp: string;
@@ -11,6 +15,10 @@ export interface ActionLogState {
   logs: ActionLogEntry[];
 }
 
+// ============================================================================
+// 2. ESTADO INICIAL DEL REGISTRO DE ACCIONES
+// ============================================================================
+
 const initialState: ActionLogState = {
   logs: [
     {
@@ -21,7 +29,7 @@ const initialState: ActionLogState = {
         second: '2-digit',
       }),
       type: '@@INIT',
-      payload: 'Redux Store Inicializado',
+      payload: 'Store Redux Inicializado',
     },
   ],
 };
@@ -35,7 +43,7 @@ const ITEM_NAME_MAP: Record<string, string> = {
   '6': 'Tomo de Hechizos',
 };
 
-// Type guard para que TypeScript reconozca PayloadAction en el matcher
+// Type guard para validar y tipar acciones interceptadas automáticamente
 const isTrackedAction = (
   action: unknown
 ): action is PayloadAction<unknown> => {
@@ -49,10 +57,15 @@ const isTrackedAction = (
   );
 };
 
+// ============================================================================
+// 3. DEFINICIÓN DEL SLICE Y EXTRA-REDUCERS (builder.addMatcher)
+// ============================================================================
+
 export const actionLogSlice = createSlice({
   name: 'actionLog',
   initialState,
   reducers: {
+    // Permite registrar manualmente una acción si es requerido
     addLog: (
       state,
       action: PayloadAction<{ type: string; payload: string }>
@@ -72,12 +85,14 @@ export const actionLogSlice = createSlice({
         state.logs = state.logs.slice(0, 5);
       }
     },
+
+    // Limpia el historial de acciones en pantalla
     clearLogs: (state) => {
       state.logs = [];
     },
   },
   extraReducers: (builder) => {
-    // Captura automática de acciones de stats e inventory
+    // Captura automática en vivo de cualquier acción de stats o inventory
     builder.addMatcher(isTrackedAction, (state, action) => {
       let payloadDisplay = 'sin payload';
 
@@ -111,6 +126,10 @@ export const actionLogSlice = createSlice({
     });
   },
 });
+
+// ============================================================================
+// 4. ACCIONES Y REDUCER EXPORTADOS
+// ============================================================================
 
 export const { addLog, clearLogs } = actionLogSlice.actions;
 

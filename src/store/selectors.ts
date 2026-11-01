@@ -1,12 +1,20 @@
 import { RootState } from './index';
 
-// Selector de ítems actualmente equipados
+// ============================================================================
+// 1. SELECTORES BÁSICOS Y DE INVENTARIO
+// ============================================================================
+
+// Retorna la lista de objetos actualmente equipados en el inventario
 export const selectEquippedItems = (state: RootState) => {
   const { catalog, equippedIds } = state.inventory;
   return catalog.filter((item) => equippedIds.includes(item.id));
 };
 
-// Selector de estadísticas totales: base + bonos de ítems equipados
+// ============================================================================
+// 2. SELECTORES DE ESTADÍSTICAS TOTALES (Estado Derivado)
+// ============================================================================
+
+// Suma los atributos base de statsSlice + los bonos de los ítems de inventorySlice
 export const selectTotalStats = (state: RootState) => {
   const { str, agi, int } = state.stats;
   const equippedItems = selectEquippedItems(state);
@@ -18,7 +26,11 @@ export const selectTotalStats = (state: RootState) => {
   return { totalStr, totalAgi, totalInt };
 };
 
-// Selector de peso total del equipamiento
+// ============================================================================
+// 3. SELECTORES DE CAPACIDAD DE PESO Y SOBRECARGA
+// ============================================================================
+
+// Suma el peso total de los ítems equipados
 export const selectTotalWeight = (state: RootState) => {
   const equippedItems = selectEquippedItems(state);
   return equippedItems.reduce((acc, i) => acc + i.weight, 0);
@@ -30,14 +42,19 @@ export const selectMaxWeightCapacity = (state: RootState) => {
   return 10 + totalStr * 2;
 };
 
-// Selector booleano: si está sobrecargado
+// Determina si el héroe sufre sobrecarga de peso
 export const selectIsOverencumbered = (state: RootState) => {
   const currentWeight = selectTotalWeight(state);
   const maxWeight = selectMaxWeightCapacity(state);
   return currentWeight > maxWeight;
 };
 
-// Selector de poder total de combate (con penalización del 30% si está sobrecargado)
+// ============================================================================
+// 4. SELECTOR DE PODER DE COMBATE
+// ============================================================================
+
+// Fórmula: (totalStr * 3) + (totalAgi * 2) + (totalInt * 3)
+// Si está sobrecargado, recibe una penalización del 30% (-30% CP)
 export const selectCombatPower = (state: RootState) => {
   const { totalStr, totalAgi, totalInt } = selectTotalStats(state);
   const isOverloaded = selectIsOverencumbered(state);
@@ -46,37 +63,42 @@ export const selectCombatPower = (state: RootState) => {
   return isOverloaded ? Math.round(rawPower * 0.7) : rawPower;
 };
 
-// Selector de apariencia visual, clase y aura según atributos
+// ============================================================================
+// 5. SELECTOR DE CLASE VISUAL Y ROL (ÍCONOS DE 1 SOLO EMOJI)
+// ============================================================================
+
 export const selectHeroVisualClass = (state: RootState) => {
   const { totalStr, totalAgi, totalInt } = selectTotalStats(state);
-  const currentWeight = selectTotalWeight(state);
 
   let heroClass = 'Aldeano';
-  let auraColor = '#94a3b8'; // Gris slate
-  let avatarSprite = '🧑🌾';
+  let auraColor = '#94a3b8'; // Gris metálico de inicio
+  let avatarSprite = '👤';    // 1 solo emoji para el rol inicial
 
-  if (totalStr >= 18 && currentWeight >= 15) {
+  if (totalStr >= 18) {
     heroClass = 'Tanque Pesado';
-    auraColor = '#f59e0b'; // Ámbar/Dorado
-    avatarSprite = '🛡️🧔';
+    auraColor = '#f59e0b';   // Dorado / Bronce blindado
+    avatarSprite = '🛡️';     // 1 solo emoji para el rol Tanque
   } else if (totalStr >= 15) {
     heroClass = 'Guerrero Berserker';
-    auraColor = '#ef4444'; // Rojo fuego
-    avatarSprite = '⚔️😡';
+    auraColor = '#ef4444';   // Furia escarlata
+    avatarSprite = '⚔️';     // 1 solo emoji para el rol Guerrero
   } else if (totalInt >= 15) {
     heroClass = 'Archimago';
-    auraColor = '#3b82f6'; // Azul arcano
-    avatarSprite = '🧙‍♂️✨';
+    auraColor = '#3b82f6';   // Azul arcano místico
+    avatarSprite = '🧙';     // 1 solo emoji para el rol Mago
   } else if (totalAgi >= 15) {
     heroClass = 'Asesino Sombrío';
-    auraColor = '#10b981'; // Verde esmeralda
-    avatarSprite = '🥷💨';
+    auraColor = '#10b981';   // Verde esmeralda furtivo
+    avatarSprite = '🥷';     // 1 solo emoji para el rol Asesino / Pícaro
   }
 
   return { heroClass, auraColor, avatarSprite };
 };
 
-// Selector consolidado de estado computado para vistas HUD completas
+// ============================================================================
+// 6. SELECTOR CONSOLIDADO PARA EL HUD
+// ============================================================================
+
 export const selectHeroComputedStatus = (state: RootState) => {
   const { str, agi, int, currentHp, availablePoints } = state.stats;
   const equippedItems = selectEquippedItems(state);
@@ -89,20 +111,20 @@ export const selectHeroComputedStatus = (state: RootState) => {
   const maxWeightCapacity = 10 + totalStr * 2;
   const isOverloaded = currentWeight > maxWeightCapacity;
 
-  // Clase visual y aura
+  // Clase visual, aura y sprite de rol (1 solo emoji)
   const { heroClass, auraColor, avatarSprite } = selectHeroVisualClass(state);
 
-  // Poder de combate
+  // Poder de combate derivado
   const rawPower = totalStr * 3 + totalAgi * 2 + totalInt * 3;
   const combatPower = isOverloaded ? Math.round(rawPower * 0.7) : rawPower;
 
-  // Ícono de arma en mano
+  // Arma en mano
   const equippedWeapon = equippedItems.find(
     (item) => item.category === 'Arma'
   );
   const equippedWeaponIcon = equippedWeapon ? equippedWeapon.icon : '✊';
 
-  // Expresión del avatar según estado de salud y carga
+  // Expresión facial reactiva según salud y sobrecarga
   let avatarExpression = '😎';
   let healthStatus = 'Saludable';
   if (currentHp <= 0) {
@@ -116,7 +138,6 @@ export const selectHeroComputedStatus = (state: RootState) => {
     healthStatus = 'Sobrecargado';
   }
 
-  // Barra de maná calculada dinámicamente según INT
   const maxMana = totalInt * 10;
   const currentMana = maxMana;
 

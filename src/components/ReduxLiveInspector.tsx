@@ -16,65 +16,77 @@ export const ReduxLiveInspector: React.FC = () => {
   const logs = useAppSelector((state) => state.actionLog.logs);
 
   const [bossHp, setBossHp] = useState<number>(500);
-  const [lastCombatMessage, setLastCombatMessage] = useState<string>(
-    'Listo para iniciar el combate contra el Boss.'
+  const [battleReport, setBattleReport] = useState<string>(
+    'El Boss espera tu primer movimiento. ¡Despacha una acción de ataque!'
   );
 
-  const handleAttackBoss = () => {
+  // Ejecuta la simulación de combate
+  const handleAttack = () => {
     if (currentHp <= 0) {
-      setLastCombatMessage('¡El héroe ha caído! Usa "Curar Héroe" para revivir.');
+      setBattleReport('❌ El héroe ha caído derrotado. Usa "Curar Héroe" para revivir.');
       return;
     }
 
-    // Calcula daño al Boss según el combatPower
-    const heroDamage = Math.max(10, Math.round(combatPower * 0.8));
-    const nextBossHp = Math.max(0, bossHp - heroDamage);
+    // Calcula el daño al Boss proporcional al Poder de Combate (CP)
+    const heroDmg = Math.max(12, Math.round(combatPower * 0.85));
+    const nextBossHp = Math.max(0, bossHp - heroDmg);
     setBossHp(nextBossHp);
 
-    // El Boss contraataca causando 25 de daño
-    const counterDamage = 25;
-    dispatch(takeDamage(counterDamage));
+    // El Boss contraataca infligiendo 25 de daño al héroe (dispatch a statsSlice)
+    const bossCounterDmg = 25;
+    dispatch(takeDamage(bossCounterDmg));
 
     if (nextBossHp <= 0) {
-      setLastCombatMessage(
-        `💥 ¡Impacto crítico de ${heroDamage} DMG! ¡Has derrotado al Boss! (Recibiste ${counterDamage} DMG)`
+      setBattleReport(
+        `💥 ¡GOLPE CRÍTICO de ${heroDmg} DMG! ¡Has derrotado al Boss! (Recibiste ${bossCounterDmg} DMG de agonía)`
       );
     } else {
-      setLastCombatMessage(
-        `⚔️ Golpeaste por ${heroDamage} DMG. El Boss contraatacó infligiendo ${counterDamage} DMG al héroe.`
+      setBattleReport(
+        `⚔️ Asestaste ${heroDmg} DMG con tus stats. El Boss contraatacó infligiéndote ${bossCounterDmg} DMG.`
       );
     }
   };
 
   const handleHeal = () => {
     dispatch(healHero());
-    setLastCombatMessage('💚 ¡Héroe curado completamente a 100 HP!');
+    setBattleReport('💚 ¡Poción de vida consumida! Salud restaurada al 100%.');
   };
 
-  const handleResetBoss = () => {
+  const handleRespawnBoss = () => {
     setBossHp(500);
-    setLastCombatMessage('👹 El Boss ha reaparecido con 500 HP.');
+    setBattleReport('👹 El Boss ha resurgido con 500 HP.');
   };
 
   return (
-    <View style={styles.cardContainer}>
+    <View style={styles.card}>
+      {/* Cabecera */}
       <View style={styles.headerRow}>
-        <Text style={styles.zoneTitle}>
-          ZONA D: ARENA DE COMBATE & INSPECTOR REDUX
-        </Text>
+        <View style={styles.zoneTagContainer}>
+          <Text style={styles.zoneTag}>
+            ZONA D • ARENA DE COMBATE & INSPECTOR REDUX
+          </Text>
+        </View>
       </View>
 
       {/* Simulador de Combate contra Boss */}
-      <View style={styles.combatBox}>
-        <View style={styles.bossInfoRow}>
-          <Text style={styles.bossIcon}>👹</Text>
-          <View style={styles.bossDetails}>
-            <Text style={styles.bossTitle}>Gólem de Magma (Boss)</Text>
-            <Text style={styles.bossHpText}>HP del Jefe: {bossHp} / 500</Text>
-            <View style={styles.bossHpBarBackground}>
+      <View style={styles.bossArenaBox}>
+        <View style={styles.bossTopRow}>
+          <View style={styles.bossIconContainer}>
+            <Text style={styles.bossEmoji}>👹</Text>
+          </View>
+          <View style={styles.bossInfoCol}>
+            <View style={styles.bossNameRow}>
+              <Text style={styles.bossName}>Gólem de Magma (Boss)</Text>
+              <Text style={styles.bossLevelTag}>LVL 50</Text>
+            </View>
+            <View style={styles.bossHpRow}>
+              <Text style={styles.bossHpLabel}>Salud del Jefe:</Text>
+              <Text style={styles.bossHpValue}>{bossHp} / 500 HP</Text>
+            </View>
+            <View style={styles.bossHpTrack}>
               <View
                 style={[
-                  styles.bossHpBarFill,
+                  styles.bossHpFill,
                   { width: `${Math.max(0, (bossHp / 500) * 100)}%` },
                 ]}
               />
@@ -82,65 +94,81 @@ export const ReduxLiveInspector: React.FC = () => {
           </View>
         </View>
 
-        <Text style={styles.combatLogText}>{lastCombatMessage}</Text>
+        {/* Mensaje de combate */}
+        <View style={styles.battleReportBox}>
+          <Text style={styles.battleReportText}>{battleReport}</Text>
+        </View>
 
-        <View style={styles.combatButtonsRow}>
+        {/* Botones de acción de combate */}
+        <View style={styles.battleButtonsRow}>
           <TouchableOpacity
             style={[
-              styles.attackButton,
-              (currentHp <= 0 || bossHp <= 0) && styles.buttonDisabled,
+              styles.btnAttack,
+              (currentHp <= 0 || bossHp <= 0) && styles.btnDisabled,
             ]}
-            onPress={handleAttackBoss}
+            onPress={handleAttack}
             disabled={currentHp <= 0 || bossHp <= 0}
+            activeOpacity={0.8}
           >
-            <Text style={styles.attackButtonText}>
-              ⚔️ Atacar al Boss ({combatPower} CP)
+            <Text style={styles.btnAttackText}>
+              ⚔️ Atacar ({combatPower} CP)
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.healButton} onPress={handleHeal}>
-            <Text style={styles.healButtonText}>💚 Curar</Text>
+          <TouchableOpacity
+            style={styles.btnHeal}
+            onPress={handleHeal}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.btnHealText}>💚 Curar</Text>
           </TouchableOpacity>
 
           {bossHp <= 0 && (
             <TouchableOpacity
-              style={styles.resetBossButton}
-              onPress={handleResetBoss}
+              style={styles.btnRespawn}
+              onPress={handleRespawnBoss}
+              activeOpacity={0.8}
             >
-              <Text style={styles.resetBossButtonText}>🔄 Revivir Boss</Text>
+              <Text style={styles.btnRespawnText}>🔄 Revivir</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {isOverloaded && (
-          <Text style={styles.combatPenaltyAlert}>
-            ⚠️ Penalización activa: -30% Poder de Combate por Sobrecarga de Peso.
+          <Text style={styles.overloadCombatWarning}>
+            ⚠️ Penalización de combate activa: -30% CP debido al peso.
           </Text>
         )}
       </View>
 
       {/* Consola Visual de Redux en Vivo (Ticker de las últimas 5 acciones) */}
-      <View style={styles.consoleContainer}>
+      <View style={styles.consoleBox}>
         <View style={styles.consoleHeader}>
-          <Text style={styles.consoleTitle}>
-            🔴 CONSOLA REDUX EN VIVO (ÚLTIMAS ACCIONES)
-          </Text>
-          <TouchableOpacity onPress={() => dispatch(clearLogs())}>
-            <Text style={styles.clearLogsText}>Limpiar</Text>
+          <View style={styles.consoleIndicatorRow}>
+            <View style={styles.livePulseDot} />
+            <Text style={styles.consoleTitle}>
+              TICKER REDUX EN VIVO (ÚLTIMAS 5 ACCIONES)
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => dispatch(clearLogs())}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.btnClearLogs}>Limpiar</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.tickerContainer}>
+        <View style={styles.logsList}>
           {logs.length === 0 ? (
-            <Text style={styles.emptyLogText}>
-              No hay acciones recientes. Interactúa con la app para ver el flujo.
+            <Text style={styles.emptyLogsText}>
+              Consola lista. Despacha una acción para visualizar el flujo en tiempo real.
             </Text>
           ) : (
             logs.map((log) => (
-              <View key={log.id} style={styles.logItemRow}>
-                <Text style={styles.logTimestamp}>[{log.timestamp}]</Text>
-                <Text style={styles.logType}>[{log.type}]</Text>
-                <Text style={styles.logPayload}> → {log.payload}</Text>
+              <View key={log.id} style={styles.logRow}>
+                <Text style={styles.logTime}>[{log.timestamp}]</Text>
+                <Text style={styles.logActionType}>[{log.type}]</Text>
+                <Text style={styles.logActionPayload}> ➔ {log.payload}</Text>
               </View>
             ))
           )}
@@ -151,128 +179,188 @@ export const ReduxLiveInspector: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#334155',
+  card: {
+    backgroundColor: '#111827',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1.5,
+    borderColor: '#1f2937',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  zoneTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#94a3b8',
-    letterSpacing: 0.8,
-  },
-  combatBox: {
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    padding: 12,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
   },
-  bossInfoRow: {
+  zoneTagContainer: {
+    backgroundColor: '#1f2937',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  zoneTag: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  bossArenaBox: {
+    backgroundColor: '#030712',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: '#374151',
+  },
+  bossTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  bossIcon: {
-    fontSize: 32,
-    marginRight: 10,
-  },
-  bossDetails: {
-    flex: 1,
-  },
-  bossTitle: {
-    color: '#f8fafc',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  bossHpText: {
-    color: '#94a3b8',
-    fontSize: 11,
-    marginVertical: 2,
-  },
-  bossHpBarBackground: {
-    height: 6,
-    backgroundColor: '#1e293b',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  bossHpBarFill: {
-    height: '100%',
-    backgroundColor: '#dc2626',
-    borderRadius: 3,
-  },
-  combatLogText: {
-    color: '#cbd5e1',
-    fontSize: 11,
-    fontStyle: 'italic',
     marginBottom: 10,
   },
-  combatButtonsRow: {
+  bossIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: '#7f1d1d33',
+    borderWidth: 1.5,
+    borderColor: '#dc2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  bossEmoji: {
+    fontSize: 26,
+  },
+  bossInfoCol: {
+    flex: 1,
+  },
+  bossNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  bossName: {
+    color: '#f9fafb',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  bossLevelTag: {
+    color: '#ef4444',
+    fontSize: 10,
+    fontWeight: '800',
+    backgroundColor: '#ef444422',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  bossHpRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  bossHpLabel: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  bossHpValue: {
+    color: '#f87171',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  bossHpTrack: {
+    height: 8,
+    backgroundColor: '#1f2937',
+    borderRadius: 4,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#374151',
+  },
+  bossHpFill: {
+    height: '100%',
+    backgroundColor: '#dc2626',
+    borderRadius: 4,
+  },
+  battleReportBox: {
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+  },
+  battleReportText: {
+    color: '#d1d5db',
+    fontSize: 11,
+    fontStyle: 'italic',
+  },
+  battleButtonsRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  attackButton: {
+  btnAttack: {
     flex: 2,
     backgroundColor: '#b91c1c',
-    borderRadius: 8,
-    paddingVertical: 9,
+    borderRadius: 10,
+    paddingVertical: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ef4444',
   },
-  attackButtonText: {
+  btnAttackText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
-  healButton: {
+  btnHeal: {
     flex: 1,
-    backgroundColor: '#059669',
-    borderRadius: 8,
-    paddingVertical: 9,
+    backgroundColor: '#047857',
+    borderRadius: 10,
+    paddingVertical: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#10b981',
   },
-  healButtonText: {
+  btnHealText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '900',
   },
-  resetBossButton: {
+  btnRespawn: {
     flex: 1,
-    backgroundColor: '#475569',
-    borderRadius: 8,
-    paddingVertical: 9,
+    backgroundColor: '#374151',
+    borderRadius: 10,
+    paddingVertical: 10,
     alignItems: 'center',
   },
-  resetBossButtonText: {
-    color: '#f8fafc',
+  btnRespawnText: {
+    color: '#f3f4f6',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '800',
   },
-  buttonDisabled: {
-    opacity: 0.4,
+  btnDisabled: {
+    opacity: 0.35,
   },
-  combatPenaltyAlert: {
+  overloadCombatWarning: {
     color: '#f87171',
     fontSize: 10,
+    fontWeight: '700',
     marginTop: 6,
-    fontWeight: '600',
   },
-  consoleContainer: {
-    backgroundColor: '#090d16',
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#1e293b',
+  consoleBox: {
+    backgroundColor: '#030712',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#1f2937',
   },
   consoleHeader: {
     flexDirection: 'row',
@@ -280,47 +368,65 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
-    paddingBottom: 4,
+    borderBottomColor: '#1f2937',
+    paddingBottom: 6,
+  },
+  consoleIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  livePulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#22c55e',
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 4,
   },
   consoleTitle: {
     color: '#38bdf8',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '900',
     letterSpacing: 0.5,
   },
-  clearLogsText: {
-    color: '#64748b',
+  btnClearLogs: {
+    color: '#6b7280',
     fontSize: 10,
+    fontWeight: '700',
   },
-  tickerContainer: {
-    gap: 4,
+  logsList: {
+    gap: 5,
   },
-  emptyLogText: {
-    color: '#475569',
-    fontSize: 11,
+  emptyLogsText: {
+    color: '#4b5563',
+    fontSize: 10,
     fontStyle: 'italic',
   },
-  logItemRow: {
+  logRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
   },
-  logTimestamp: {
-    color: '#64748b',
+  logTime: {
+    color: '#6b7280',
     fontSize: 10,
     fontFamily: 'monospace',
     marginRight: 4,
   },
-  logType: {
+  logActionType: {
     color: '#4ade80',
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '800',
     fontFamily: 'monospace',
   },
-  logPayload: {
+  logActionPayload: {
     color: '#fbbf24',
     fontSize: 10,
     fontFamily: 'monospace',
+    fontWeight: '600',
   },
 });

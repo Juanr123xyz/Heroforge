@@ -19,138 +19,167 @@ export const StatsControlPanel: React.FC = () => {
   const statsConfig = [
     {
       key: 'str' as const,
-      name: 'Fuerza (STR)',
+      name: 'FUERZA (STR)',
       icon: '⚔️',
       base: str,
       total: totalStats.totalStr,
-      color: '#ef4444',
+      accentColor: '#ef4444',
+      bgGlow: '#ef444415',
     },
     {
       key: 'agi' as const,
-      name: 'Agilidad (AGI)',
+      name: 'AGILIDAD (AGI)',
       icon: '🏹',
       base: agi,
       total: totalStats.totalAgi,
-      color: '#10b981',
+      accentColor: '#10b981',
+      bgGlow: '#10b98115',
     },
     {
       key: 'int' as const,
-      name: 'Inteligencia (INT)',
+      name: 'INTELIGENCIA (INT)',
       icon: '🔮',
       base: int,
       total: totalStats.totalInt,
-      color: '#3b82f6',
+      accentColor: '#3b82f6',
+      bgGlow: '#3b82f615',
     },
   ];
 
   return (
-    <View style={styles.cardContainer}>
+    <View style={styles.card}>
+      {/* Cabecera */}
       <View style={styles.headerRow}>
-        <Text style={styles.zoneTitle}>ZONA B: PANEL DE ENTRENAMIENTO</Text>
+        <View style={styles.zoneTagContainer}>
+          <Text style={styles.zoneTag}>ZONA B • PANEL DE ENTRENAMIENTO</Text>
+        </View>
         <View style={styles.pointsBadge}>
           <Text style={styles.pointsBadgeText}>
-            Puntos: {availablePoints} pts
+            💎 {availablePoints} PTS DISPONIBLES
           </Text>
         </View>
       </View>
 
-      {/* Filas de Atributos: STR, AGI, INT */}
+      {/* Lista de Atributos */}
       {statsConfig.map((item) => {
         const bonus = item.total - item.base;
-        const progressWidth = Math.min(100, (item.total / 30) * 100);
+        const barWidth = Math.min(100, (item.total / 30) * 100);
 
         return (
-          <View key={item.key} style={styles.statRow}>
-            <View style={styles.statInfo}>
-              <Text style={styles.statIcon}>{item.icon}</Text>
-              <View style={styles.statNameCol}>
-                <Text style={styles.statLabel}>{item.name}</Text>
+          <View
+            key={item.key}
+            style={[styles.statRow, { backgroundColor: item.bgGlow }]}
+          >
+            {/* Ícono e Información */}
+            <View style={styles.statLeftCol}>
+              <View
+                style={[styles.iconBox, { borderColor: item.accentColor }]}
+              >
+                <Text style={styles.statIcon}>{item.icon}</Text>
+              </View>
+
+              <View style={styles.statTexts}>
+                <Text style={styles.statName}>{item.name}</Text>
                 <Text style={styles.statValues}>
-                  Base: {item.base}{' '}
+                  Base: <Text style={styles.whiteVal}>{item.base}</Text>
                   {bonus !== 0 && (
-                    <Text
-                      style={{
-                        color: bonus > 0 ? '#4ade80' : '#f87171',
-                        fontWeight: '600',
-                      }}
-                    >
+                    <Text style={styles.bonusVal}>
+                      {' '}
                       ({bonus > 0 ? `+${bonus}` : bonus} equip.)
                     </Text>
                   )}{' '}
-                  = <Text style={{ color: '#f1f5f9', fontWeight: 'bold' }}>{item.total}</Text>
+                  = <Text style={[styles.totalVal, { color: item.accentColor }]}>{item.total}</Text>
                 </Text>
               </View>
             </View>
 
-            {/* Barra de progreso del stat */}
-            <View style={styles.statBarContainer}>
+            {/* Barra Visual de Nivel */}
+            <View style={styles.gaugeContainer}>
               <View
                 style={[
-                  styles.statBarFill,
-                  { width: `${progressWidth}%`, backgroundColor: item.color },
+                  styles.gaugeFill,
+                  { width: `${barWidth}%`, backgroundColor: item.accentColor },
                 ]}
               />
             </View>
 
-            {/* Controles [-] y [+] */}
+            {/* Botones de Control [-] y [+] */}
             <View style={styles.controlsRow}>
               <TouchableOpacity
                 style={[
-                  styles.controlButton,
-                  item.base <= 1 && styles.buttonDisabled,
+                  styles.btnControl,
+                  item.base <= 1 && styles.btnDisabled,
                 ]}
                 onPress={() => dispatch(decrementStat(item.key))}
                 disabled={item.base <= 1}
+                activeOpacity={0.7}
               >
-                <Text style={styles.controlButtonText}>-</Text>
+                <Text style={styles.btnControlText}>−</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
-                  styles.controlButton,
-                  availablePoints <= 0 && styles.buttonDisabled,
+                  styles.btnControl,
+                  availablePoints <= 0 && styles.btnDisabled,
+                  { backgroundColor: item.accentColor + '33', borderColor: item.accentColor },
                 ]}
                 onPress={() => dispatch(incrementStat(item.key))}
                 disabled={availablePoints <= 0}
+                activeOpacity={0.7}
               >
-                <Text style={styles.controlButtonText}>+</Text>
+                <Text
+                  style={[
+                    styles.btnControlText,
+                    availablePoints > 0 && { color: item.accentColor },
+                  ]}
+                >
+                  +
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         );
       })}
 
-      {/* Presets Rápidos y Poción de Reseteo */}
-      <View style={styles.actionsSection}>
-        <Text style={styles.sectionSubtitle}>Presets Rápidos:</Text>
+      {/* Sección de Presets y Reset */}
+      <View style={styles.presetsSection}>
+        <Text style={styles.sectionTitle}>⚡ PRESETS RÁPIDOS DE ROL (1-DISPATCH)</Text>
         <View style={styles.presetButtonsRow}>
           <TouchableOpacity
-            style={[styles.presetButton, { borderColor: '#ef4444' }]}
+            style={[styles.btnPreset, { borderColor: '#ef4444' }]}
             onPress={() => dispatch(applyBuildPreset('WARRIOR'))}
+            activeOpacity={0.8}
           >
-            <Text style={styles.presetButtonText}>Build Guerrero</Text>
+            <Text style={styles.btnPresetIcon}>⚔️</Text>
+            <Text style={styles.btnPresetText}>Build Guerrero</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.presetButton, { borderColor: '#3b82f6' }]}
+            style={[styles.btnPreset, { borderColor: '#3b82f6' }]}
             onPress={() => dispatch(applyBuildPreset('MAGE'))}
+            activeOpacity={0.8}
           >
-            <Text style={styles.presetButtonText}>Build Mago</Text>
+            <Text style={styles.btnPresetIcon}>🧙</Text>
+            <Text style={styles.btnPresetText}>Build Mago</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.presetButton, { borderColor: '#f59e0b' }]}
+            style={[styles.btnPreset, { borderColor: '#f59e0b' }]}
             onPress={() => dispatch(applyBuildPreset('TANK'))}
+            activeOpacity={0.8}
           >
-            <Text style={styles.presetButtonText}>Build Tanque</Text>
+            <Text style={styles.btnPresetIcon}>🛡️</Text>
+            <Text style={styles.btnPresetText}>Build Tanque</Text>
           </TouchableOpacity>
         </View>
 
+        {/* Botón de Poción de Reseteo */}
         <TouchableOpacity
-          style={styles.resetButton}
+          style={styles.btnReset}
           onPress={() => dispatch(resetStats())}
+          activeOpacity={0.8}
         >
-          <Text style={styles.resetButtonText}>🧪 Poción de Reseteo (Reset)</Text>
+          <Text style={styles.btnResetText}>🧪 Tomar Poción de Reseteo (Reset Total)</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -158,79 +187,120 @@ export const StatsControlPanel: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
+  card: {
+    backgroundColor: '#111827',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: '#1f2937',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  zoneTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#94a3b8',
-    letterSpacing: 0.8,
+  zoneTagContainer: {
+    backgroundColor: '#1f2937',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  zoneTag: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   pointsBadge: {
-    backgroundColor: '#8b5cf620',
-    borderColor: '#8b5cf6',
-    borderWidth: 1,
+    backgroundColor: '#7c3aed22',
+    borderColor: '#a855f7',
+    borderWidth: 1.5,
     paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: 20,
+    shadowColor: '#a855f7',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
   },
   pointsBadgeText: {
     color: '#c084fc',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#0f172a80',
-    borderRadius: 10,
-    padding: 8,
+    borderRadius: 12,
+    padding: 10,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#1f2937',
   },
-  statInfo: {
+  statLeftCol: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1.2,
+    flex: 1.3,
+  },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#030712',
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   statIcon: {
-    fontSize: 20,
-    marginRight: 8,
+    fontSize: 18,
   },
-  statNameCol: {
+  statTexts: {
     flex: 1,
   },
-  statLabel: {
-    fontSize: 12,
-    color: '#f8fafc',
-    fontWeight: '600',
+  statName: {
+    color: '#f9fafb',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   statValues: {
+    color: '#9ca3af',
     fontSize: 10,
-    color: '#94a3b8',
-    marginTop: 1,
+    marginTop: 2,
   },
-  statBarContainer: {
+  whiteVal: {
+    color: '#e5e7eb',
+    fontWeight: '700',
+  },
+  bonusVal: {
+    color: '#34d399',
+    fontWeight: '700',
+  },
+  totalVal: {
+    fontWeight: '900',
+    fontSize: 11,
+  },
+  gaugeContainer: {
     width: 60,
-    height: 6,
-    backgroundColor: '#1e293b',
-    borderRadius: 3,
+    height: 7,
+    backgroundColor: '#1f2937',
+    borderRadius: 4,
     overflow: 'hidden',
     marginHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#374151',
   },
-  statBarFill: {
+  gaugeFill: {
     height: '100%',
     borderRadius: 3,
   },
@@ -238,62 +308,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
   },
-  controlButton: {
+  btnControl: {
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#334155',
+    backgroundColor: '#1f2937',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#374151',
   },
-  buttonDisabled: {
-    opacity: 0.35,
+  btnDisabled: {
+    opacity: 0.3,
   },
-  controlButtonText: {
-    color: '#f8fafc',
-    fontSize: 18,
-    fontWeight: 'bold',
+  btnControlText: {
+    color: '#f9fafb',
+    fontSize: 16,
+    fontWeight: '900',
   },
-  actionsSection: {
+  presetsSection: {
     marginTop: 8,
-    paddingTop: 8,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: '#1f2937',
   },
-  sectionSubtitle: {
-    fontSize: 11,
-    color: '#94a3b8',
-    marginBottom: 6,
-    fontWeight: '600',
+  sectionTitle: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    marginBottom: 8,
   },
   presetButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
     gap: 6,
+    marginBottom: 8,
   },
-  presetButton: {
+  btnPreset: {
     flex: 1,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#030712',
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  btnPresetIcon: {
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  btnPresetText: {
+    color: '#f3f4f6',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  btnReset: {
+    backgroundColor: '#6d28d9',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
     borderWidth: 1,
-    alignItems: 'center',
+    borderColor: '#8b5cf6',
   },
-  presetButtonText: {
-    color: '#e2e8f0',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  resetButton: {
-    backgroundColor: '#7c3aed',
-    paddingVertical: 9,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  resetButtonText: {
+  btnResetText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
 });
